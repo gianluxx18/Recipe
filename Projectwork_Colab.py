@@ -71,7 +71,7 @@ def fetch_nutrition(recipe_id: int) -> dict:
 if st.session_state.show_favorites:
     if st.button("🔍 Back to Search"):
         st.session_state.show_favorites = False
-        st.session_state.display_count = 5
+        st.session_state.display_count = 10
 else:
     if st.button("⭐ Show Favorites"):
         st.session_state.show_favorites = True
@@ -84,7 +84,7 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
     else:
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
-            st.session_state.display_count = 5
+            st.session_state.display_count = 10
         except requests.HTTPError as e:
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
@@ -198,7 +198,7 @@ else:
                 st.pyplot(fig)
 
             with val_col:
-                st.markdown("**Total (g):**")
+                st.markdown("**Total:**")
                 st.write(f"- Calories: {calories:.0f} kcal")
                 st.write(f"- Carbs: {carbs:.1f} g")
                 st.write(f"- Protein: {protein:.1f} g")
