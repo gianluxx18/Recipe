@@ -162,6 +162,12 @@ else:
 
 # ——— Show More Button ———
 if not st.session_state.show_favorites:
-    if st.session_state.display_count < len(st.session_state.recipes_data):
-        if st.button("Show more"):
-            st.session_state.display_count += 5
+    if "show_more" not in st.session_state:
+        st.session_state.show_more = False
+
+    if st.button("Show more"):
+        st.session_state.show_more = True
+
+    if st.session_state.show_more:
+        st.session_state.display_count += 5
+        st.session_state.show_more = False
