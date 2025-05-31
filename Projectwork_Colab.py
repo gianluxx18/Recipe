@@ -159,15 +159,3 @@ else:
 
             except requests.HTTPError:
                 st.warning("⚠️ Could not fetch nutrition info.")
-
-# ——— Show More Button ———
-if not st.session_state.show_favorites:
-    if "show_more" not in st.session_state:
-        st.session_state.show_more = False
-
-    if st.button("Show more"):
-        st.session_state.show_more = True
-
-    if st.session_state.show_more:
-        st.session_state.display_count += 5
-        st.session_state.show_more = False
