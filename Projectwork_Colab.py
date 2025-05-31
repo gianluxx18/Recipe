@@ -23,8 +23,6 @@ if "display_count" not in st.session_state:
     st.session_state.display_count = 5
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
-if "shown_nutrition" not in st.session_state:
-    st.session_state.shown_nutrition = set()
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -74,7 +72,6 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
             st.session_state.display_count = 5
-            st.session_state.shown_nutrition.clear()
         except requests.HTTPError as e:
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
@@ -86,7 +83,7 @@ if st.session_state.show_favorites:
 else:
     recipes = st.session_state.recipes_data[:st.session_state.display_count]
 
-if not recipes:
+if not isinstance(recipes, list) or not recipes:
     st.info("No recipes to show.")
 else:
     for recipe in recipes:
@@ -104,7 +101,6 @@ else:
                         unit = ing.get("unitLong") or ing.get("unit") or ""
                         name = ing.get("originalName") or ing.get("name")
                         st.write(f"- {amt:g} {unit} {name}")
-
             if recipe not in st.session_state.favorites:
                 if st.button("Add to Favorites", key=f"fav_{recipe['id']}"):
                     st.session_state.favorites.append(recipe)
@@ -117,7 +113,11 @@ else:
 
         with col2:
             if recipe.get("image"):
-                st.image(recipe["image"], caption=recipe.get("title", ""), use_container_width=True)
+                st.image(
+                    recipe["image"],
+                    caption=recipe.get("title", ""),
+                    use_container_width=True
+                )
 
             combined = recipe.get("usedIngredients", []) + recipe.get("missedIngredients", [])
             data = {
@@ -128,45 +128,40 @@ else:
             df.index.name = "Ingredient"
             st.bar_chart(df)
 
-            # Nutrition toggle buttons
-            if recipe["id"] not in st.session_state.shown_nutrition:
-                if st.button("Show Nutrition", key=f"show_nutrition_{recipe['id']}"):
-                    st.session_state.shown_nutrition.add(recipe["id"])
-                    st.experimental_rerun()
-            else:
-                if st.button("Hide Nutrition", key=f"hide_nutrition_{recipe['id']}"):
-                    st.session_state.shown_nutrition.remove(recipe["id"])
-                    st.experimental_rerun()
+            try:
+                nutrition = fetch_nutrition(recipe.get("id"))
+                carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
+                protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
+                fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
 
-                try:
-                    nutrition = fetch_nutrition(recipe["id"])
-                    carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
-                    protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
-                    fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
+                macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
+                pie_col, val_col = st.columns([1, 1])
 
-                    macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
-                    pie_col, val_col = st.columns([1, 1])
+                with pie_col:
+                    fig, ax = plt.subplots()
+                    fig.patch.set_facecolor("white")
+                    ax.set_facecolor("white")
+                    ax.pie(
+                        macros.values(),
+                        labels=macros.keys(),
+                        autopct="%1.1f%%",
+                        startangle=90,
+                    )
+                    ax.set_title("Macronutrient Distribution")
+                    ax.axis("equal")
+                    st.pyplot(fig)
 
-                    with pie_col:
-                        fig, ax = plt.subplots()
-                        fig.patch.set_facecolor("white")
-                        ax.set_facecolor("white")
-                        ax.pie(macros.values(), labels=macros.keys(), autopct="%1.1f%%", startangle=90)
-                        ax.set_title("Macronutrient Distribution")
-                        ax.axis("equal")
-                        st.pyplot(fig)
+                with val_col:
+                    st.markdown("**Total (g):**")
+                    st.write(f"- Carbs: {carbs:.1f} g")
+                    st.write(f"- Protein: {protein:.1f} g")
+                    st.write(f"- Fat: {fat:.1f} g")
 
-                    with val_col:
-                        st.markdown("**Total (g):**")
-                        st.write(f"- Carbs: {carbs:.1f} g")
-                        st.write(f"- Protein: {protein:.1f} g")
-                        st.write(f"- Fat: {fat:.1f} g")
-
-                except requests.HTTPError:
-                    st.warning("⚠️ Could not fetch nutrition info.")
+            except requests.HTTPError:
+                st.warning("⚠️ Could not fetch nutrition info.")
 
 # ——— Show More Button ———
-if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
-    if st.button("Show more"):
-        st.session_state.display_count += 5
-        st.experimental_rerun()
+if not st.session_state.show_favorites:
+    if st.session_state.display_count < len(st.session_state.recipes_data):
+        if st.button("Show more"):
+            st.session_state.display_count += 5
