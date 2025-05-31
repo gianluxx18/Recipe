@@ -23,8 +23,6 @@ if "display_count" not in st.session_state:
     st.session_state.display_count = 5
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
-if "show_more_clicked" not in st.session_state:
-    st.session_state.show_more_clicked = False
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -166,9 +164,4 @@ else:
 if not st.session_state.show_favorites:
     if st.session_state.display_count < len(st.session_state.recipes_data):
         if st.button("Show more"):
-            st.session_state.show_more_clicked = True
-
-    if st.session_state.show_more_clicked:
-        st.session_state.display_count += 5
-        st.session_state.show_more_clicked = False
-        st.experimental_rerun()
+            st.session_state.display_count += 5
