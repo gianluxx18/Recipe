@@ -20,9 +20,11 @@ if "favorites" not in st.session_state:
 if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
-    st.session_state.display_count = 10
+    st.session_state.display_count = 5
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
+if "recipe_nutrition" not in st.session_state:
+    st.session_state.recipe_nutrition = {}
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -38,6 +40,9 @@ if not st.session_state.show_favorites:
         key="ingredients",
         placeholder="e.g. flour, eggs, milk",
     )
+    sort_option = st.selectbox("Sort recipes by", ["None", "Calories (low to high)"])
+else:
+    sort_option = "None"
 
 # ——— Fetch Functions ———
 def fetch_recipes(ingredients_str: str):
@@ -58,7 +63,7 @@ def fetch_nutrition(recipe_id: int) -> dict:
 if st.session_state.show_favorites:
     if st.button("🔍 Back to Search"):
         st.session_state.show_favorites = False
-        st.session_state.display_count = 10
+        st.session_state.display_count = 5
 else:
     if st.button("⭐ Show Favorites"):
         st.session_state.show_favorites = True
@@ -71,7 +76,7 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
     else:
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
-            st.session_state.display_count = 10
+            st.session_state.display_count = 5
         except requests.HTTPError as e:
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
@@ -82,6 +87,25 @@ if st.session_state.show_favorites:
     recipes = st.session_state.favorites
 else:
     recipes = st.session_state.recipes_data[:st.session_state.display_count]
+
+# Nutrition-based sorting
+for recipe in recipes:
+    rid = recipe["id"]
+    if rid not in st.session_state.recipe_nutrition:
+        try:
+            nutrition = fetch_nutrition(rid)
+            calories = float(nutrition.get("calories", "0").replace("kcal", "").strip())
+            st.session_state.recipe_nutrition[rid] = {
+                "calories": calories,
+                "carbs": nutrition.get("carbs", "0g"),
+                "protein": nutrition.get("protein", "0g"),
+                "fat": nutrition.get("fat", "0g")
+            }
+        except:
+            st.session_state.recipe_nutrition[rid] = {"calories": float("inf")}
+
+if sort_option == "Calories (low to high)":
+    recipes.sort(key=lambda r: st.session_state.recipe_nutrition.get(r["id"], {}).get("calories", float("inf")))
 
 if not isinstance(recipes, list) or not recipes:
     st.info("No recipes to show.")
@@ -128,34 +152,30 @@ else:
             df.index.name = "Ingredient"
             st.bar_chart(df)
 
-            try:
-                nutrition = fetch_nutrition(recipe.get("id"))
-                carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
-                protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
-                fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
+            nutrition_data = st.session_state.recipe_nutrition.get(recipe.get("id"), {})
+            carbs = float(nutrition_data.get("carbs", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
+            protein = float(nutrition_data.get("protein", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
+            fat = float(nutrition_data.get("fat", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
 
-                macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
-                pie_col, val_col = st.columns([1, 1])
+            macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
+            pie_col, val_col = st.columns([1, 1])
 
-                with pie_col:
-                    fig, ax = plt.subplots()
-                    fig.patch.set_facecolor("white")
-                    ax.set_facecolor("white")
-                    ax.pie(
-                        macros.values(),
-                        labels=macros.keys(),
-                        autopct="%1.1f%%",
-                        startangle=90,
-                    )
-                    ax.set_title("Macronutrient Distribution")
-                    ax.axis("equal")
-                    st.pyplot(fig)
+            with pie_col:
+                fig, ax = plt.subplots()
+                fig.patch.set_facecolor("white")
+                ax.set_facecolor("white")
+                ax.pie(
+                    macros.values(),
+                    labels=macros.keys(),
+                    autopct="%1.1f%%",
+                    startangle=90,
+                )
+                ax.set_title("Macronutrient Distribution")
+                ax.axis("equal")
+                st.pyplot(fig)
 
-                with val_col:
-                    st.markdown("**Total (g):**")
-                    st.write(f"- Carbs: {carbs:.1f} g")
-                    st.write(f"- Protein: {protein:.1f} g")
-                    st.write(f"- Fat: {fat:.1f} g")
-
-            except requests.HTTPError:
-                st.warning("⚠️ Could not fetch nutrition info.")
+            with val_col:
+                st.markdown("**Total (g):**")
+                st.write(f"- Carbs: {carbs:.1f} g")
+                st.write(f"- Protein: {protein:.1f} g")
+                st.write(f"- Fat: {fat:.1f} g")
