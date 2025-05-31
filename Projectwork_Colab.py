@@ -20,7 +20,7 @@ if "favorites" not in st.session_state:
 if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
-    st.session_state.display_count = 5
+    st.session_state.display_count = 10
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
 if "recipe_nutrition" not in st.session_state:
