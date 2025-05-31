@@ -77,11 +77,7 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
             st.session_state.recipes_data = []
 
 # ——— Display Section ———
-if st.session_state.show_favorites:
-    st.header("⭐ Favorite Recipes")
-    recipes = st.session_state.favorites
-else:
-    recipes = st.session_state.recipes_data[:st.session_state.display_count]
+recipes = st.session_state.favorites if st.session_state.show_favorites else st.session_state.recipes_data[:st.session_state.display_count]
 
 if not isinstance(recipes, list) or not recipes:
     st.info("No recipes to show.")
@@ -101,15 +97,14 @@ else:
                         unit = ing.get("unitLong") or ing.get("unit") or ""
                         name = ing.get("originalName") or ing.get("name")
                         st.write(f"- {amt:g} {unit} {name}")
-            if recipe not in st.session_state.favorites:
-                if st.button("Add to Favorites", key=f"fav_{recipe['id']}"):
-                    st.session_state.favorites.append(recipe)
-            else:
+            if st.session_state.show_favorites:
                 if st.button("Remove from Favorites", key=f"rm_{recipe['id']}"):
-                    st.session_state.favorites = [
-                        r for r in st.session_state.favorites if r["id"] != recipe["id"]
-                    ]
+                    st.session_state.favorites = [r for r in st.session_state.favorites if r["id"] != recipe["id"]]
                     st.experimental_rerun()
+            else:
+                if recipe not in st.session_state.favorites:
+                    if st.button("Add to Favorites", key=f"fav_{recipe['id']}"):
+                        st.session_state.favorites.append(recipe)
 
         with col2:
             if recipe.get("image"):
@@ -160,8 +155,7 @@ else:
             except requests.HTTPError:
                 st.warning("⚠️ Could not fetch nutrition info.")
 
-# ——— Show More Button ———
-if not st.session_state.show_favorites:
-    if st.session_state.display_count < len(st.session_state.recipes_data):
-        if st.button("Show more"):
-            st.session_state.display_count += 5
+# Show More button only for recipe search (not for favorites)
+if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
+    if st.button("Show more"):
+        st.session_state.display_count += 5
