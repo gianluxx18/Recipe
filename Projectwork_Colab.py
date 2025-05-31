@@ -21,18 +21,17 @@ if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
     st.session_state.display_count = 5
-if "refresh_favorites" not in st.session_state:
-    st.session_state.refresh_favorites = False
+if "people_count" not in st.session_state:
+    st.session_state.people_count = 1
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
-    people_count = st.number_input(
+    st.session_state.people_count = st.number_input(
         "Number of people",
         min_value=1,
         max_value=100,
-        value=1,
+        value=st.session_state.people_count,
         step=1,
-        key="people_count",
     )
     ingredients = st.text_input(
         "Ingredients (comma-separated)",
@@ -108,9 +107,9 @@ else:
             else:
                 if st.button("Remove from Favorites", key=f"rm_{recipe['id']}"):
                     st.session_state.favorites = [
-                        fav for fav in st.session_state.favorites if fav["id"] != recipe["id"]
+                        r for r in st.session_state.favorites if r["id"] != recipe["id"]
                     ]
-                    st.session_state.refresh_favorites = True
+                    st.experimental_rerun()
 
         with col2:
             if recipe.get("image"):
@@ -161,12 +160,8 @@ else:
             except requests.HTTPError:
                 st.warning("⚠️ Could not fetch nutrition info.")
 
-# Show More button only for recipe search (not for favorites)
-if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
-    if st.button("Show more"):
-        st.session_state.display_count += 5
-
-# Refresh page safely without error
-if st.session_state.refresh_favorites:
-    st.session_state.refresh_favorites = False
-    st.stop()  # cleanly stop execution; no error
+# ——— Show More Button ———
+if not st.session_state.show_favorites:
+    if st.session_state.display_count < len(st.session_state.recipes_data):
+        if st.button("Show more"):
+            st.session_state.display_count += 5
