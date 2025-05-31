@@ -1,3 +1,8 @@
+# Recipe Finder (Python, Streamlit)
+# This app lets users search for recipes by ingredients, view detailed nutrition info,
+# sort results by calories/macros, and manage favorites.
+# Uses the Spoonacular API. All requirements are listed in requirements.txt.
+
 # Imports the required modules
 # the required modules are also noted in a txt.-file in the github folder to enable streamlit to run the app online
 import os
