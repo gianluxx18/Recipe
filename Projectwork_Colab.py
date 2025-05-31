@@ -20,7 +20,7 @@ if "favorites" not in st.session_state:
 if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
-    st.session_state.display_count = 5
+    st.session_state.display_count = 10
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
 
@@ -58,7 +58,7 @@ def fetch_nutrition(recipe_id: int) -> dict:
 if st.session_state.show_favorites:
     if st.button("🔍 Back to Search"):
         st.session_state.show_favorites = False
-        st.session_state.display_count = 5
+        st.session_state.display_count = 10
 else:
     if st.button("⭐ Show Favorites"):
         st.session_state.show_favorites = True
@@ -71,7 +71,7 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
     else:
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
-            st.session_state.display_count = 5
+            st.session_state.display_count = 10
         except requests.HTTPError as e:
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
