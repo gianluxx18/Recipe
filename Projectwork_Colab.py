@@ -23,10 +23,8 @@ if "display_count" not in st.session_state:
     st.session_state.display_count = 5
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
-if "nutrition_cache" not in st.session_state:
-    st.session_state.nutrition_cache = {}
-if "show_nutrition" not in st.session_state:
-    st.session_state.show_nutrition = set()
+if "shown_nutrition" not in st.session_state:
+    st.session_state.shown_nutrition = set()
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -132,47 +130,43 @@ else:
             df.index.name = "Ingredient"
             st.bar_chart(df)
 
-            # Nutrition Button & Logic
-            show_key = f"show_nutrition_{recipe['id']}"
-            if st.button("Show Nutrition Info", key=show_key):
-                st.session_state.show_nutrition.add(recipe["id"])
+            if recipe["id"] not in st.session_state.shown_nutrition:
+                if st.button("Show Nutrition", key=f"show_nutrition_{recipe['id']}"):
+                    st.session_state.shown_nutrition.add(recipe["id"])
+                    st.experimental_rerun()
 
-            if recipe["id"] in st.session_state.show_nutrition:
-                if recipe["id"] not in st.session_state.nutrition_cache:
-                    try:
-                        nutrition = fetch_nutrition(recipe.get("id"))
-                        st.session_state.nutrition_cache[recipe["id"]] = nutrition
-                    except requests.HTTPError:
-                        st.warning("⚠️ Could not fetch nutrition info.")
-                        continue
+            if recipe["id"] in st.session_state.shown_nutrition:
+                try:
+                    nutrition = fetch_nutrition(recipe.get("id"))
+                    carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
+                    protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
+                    fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
 
-                nutrition = st.session_state.nutrition_cache[recipe["id"]]
-                carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
-                protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
-                fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
+                    macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
+                    pie_col, val_col = st.columns([1, 1])
 
-                macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
-                pie_col, val_col = st.columns([1, 1])
+                    with pie_col:
+                        fig, ax = plt.subplots()
+                        fig.patch.set_facecolor("white")
+                        ax.set_facecolor("white")
+                        ax.pie(
+                            macros.values(),
+                            labels=macros.keys(),
+                            autopct="%1.1f%%",
+                            startangle=90,
+                        )
+                        ax.set_title("Macronutrient Distribution")
+                        ax.axis("equal")
+                        st.pyplot(fig)
 
-                with pie_col:
-                    fig, ax = plt.subplots()
-                    fig.patch.set_facecolor("white")
-                    ax.set_facecolor("white")
-                    ax.pie(
-                        macros.values(),
-                        labels=macros.keys(),
-                        autopct="%1.1f%%",
-                        startangle=90,
-                    )
-                    ax.set_title("Macronutrient Distribution")
-                    ax.axis("equal")
-                    st.pyplot(fig)
+                    with val_col:
+                        st.markdown("**Total (g):**")
+                        st.write(f"- Carbs: {carbs:.1f} g")
+                        st.write(f"- Protein: {protein:.1f} g")
+                        st.write(f"- Fat: {fat:.1f} g")
 
-                with val_col:
-                    st.markdown("**Total (g):**")
-                    st.write(f"- Carbs: {carbs:.1f} g")
-                    st.write(f"- Protein: {protein:.1f} g")
-                    st.write(f"- Fat: {fat:.1f} g")
+                except requests.HTTPError:
+                    st.warning("⚠️ Could not fetch nutrition info.")
 
 # ——— Show More Button ———
 if not st.session_state.show_favorites:
