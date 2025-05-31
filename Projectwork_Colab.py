@@ -13,9 +13,9 @@ st.title("Recipe Finder")
 st.write("Discover delicious recipes based on the ingredients you have on hand!")
 
 # ——— Session State Initialization ———
-for key in ["recipes_data", "favorites", "selected_fav"]:
+for key in ["recipes_data", "favorites", "selected_fav", "viewing_favorites"]:
     if key not in st.session_state:
-        st.session_state[key] = [] if key != "selected_fav" else None
+        st.session_state[key] = [] if key in ["recipes_data", "favorites"] else False if key == "viewing_favorites" else None
 
 # ——— Input Widgets ———
 people_count = st.number_input(
@@ -32,6 +32,15 @@ ingredients = st.text_input(
     placeholder="e.g. flour, eggs, milk",
 )
 
+# ——— View Toggle Buttons ———
+col_a, col_b = st.columns([1, 1])
+with col_a:
+    if st.button("🌟 Show Favorites"):
+        st.session_state.viewing_favorites = True
+with col_b:
+    if st.button("🔍 Back to Search"):
+        st.session_state.viewing_favorites = False
+
 # ——— Fetch Functions ———
 def fetch_recipes(ingredients_str: str):
     params = {"apiKey": API_KEY, "ingredients": ingredients_str}
@@ -47,7 +56,7 @@ def fetch_nutrition(recipe_id: int) -> dict:
     resp.raise_for_status()
     return resp.json()
 
-# ——— Button: Search Recipes ———
+# ——— Search Button ———
 if st.button("Search Recipes"):
     ingr = ingredients.strip()
     if not ingr:
@@ -55,29 +64,12 @@ if st.button("Search Recipes"):
     else:
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
+            st.session_state.viewing_favorites = False  # switch to results view
         except requests.HTTPError as e:
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
 
-# ——— Button: Show Favorites List ———
-st.subheader("Favorites")
-if not st.session_state.favorites:
-    st.info("⭐ No favorites yet.")
-else:
-    for fav in st.session_state.favorites:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button(f"📄 {fav['title']}", key=f"show_{fav['id']}"):
-                st.session_state.selected_fav = fav
-        with col2:
-            if st.button("❌ Remove", key=f"remove_{fav['id']}"):
-                st.session_state.favorites = [
-                    f for f in st.session_state.favorites if f["id"] != fav["id"]
-                ]
-                if st.session_state.selected_fav and st.session_state.selected_fav["id"] == fav["id"]:
-                    st.session_state.selected_fav = None
-
-# ——— Helper: Show Recipe Details ———
+# ——— Show Recipe Function ———
 def show_recipe(recipe):
     st.subheader(recipe.get("title", "Untitled recipe"))
     col1, col2 = st.columns([1, 2])
@@ -134,20 +126,36 @@ def show_recipe(recipe):
         except requests.HTTPError:
             st.warning("⚠️ Could not fetch nutrition info.")
 
-# ——— Display Selected Favorite ———
-if st.session_state.selected_fav:
-    st.markdown("---")
-    st.write("### Selected Favorite Recipe")
-    show_recipe(st.session_state.selected_fav)
+# ——— View Favorites ———
+if st.session_state.viewing_favorites:
+    st.subheader("✨ Favorites")
+    if not st.session_state.favorites:
+        st.info("⭐ No favorites yet.")
+    else:
+        for fav in st.session_state.favorites:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                if st.button(f"📄 {fav['title']}", key=f"show_{fav['id']}"):
+                    st.session_state.selected_fav = fav
+            with col2:
+                if st.button("❌ Remove", key=f"remove_{fav['id']}"):
+                    st.session_state.favorites = [f for f in st.session_state.favorites if f["id"] != fav["id"]]
+                    if st.session_state.selected_fav and st.session_state.selected_fav["id"] == fav["id"]:
+                        st.session_state.selected_fav = None
 
-# ——— Display Search Results ———
-if isinstance(st.session_state.recipes_data, list) and st.session_state.recipes_data:
-    st.markdown("---")
-    st.subheader("Search Results")
-    for recipe in st.session_state.recipes_data:
-        show_recipe(recipe)
-        if any(f["id"] == recipe["id"] for f in st.session_state.favorites):
-            st.button("⭐ Favorited", disabled=True, key=f"disabled_{recipe['id']}")
-        else:
-            if st.button("⭐ Add to Favorites", key=f"fav_{recipe['id']}"):
-                st.session_state.favorites.append(recipe)
+        if st.session_state.selected_fav:
+            st.markdown("---")
+            st.write("### Selected Favorite Recipe")
+            show_recipe(st.session_state.selected_fav)
+
+# ——— Show Search Results (Only if NOT in favorites view) ———
+if not st.session_state.viewing_favorites:
+    if isinstance(st.session_state.recipes_data, list) and st.session_state.recipes_data:
+        st.subheader("🔍 Search Results")
+        for recipe in st.session_state.recipes_data:
+            show_recipe(recipe)
+            if any(f["id"] == recipe["id"] for f in st.session_state.favorites):
+                st.button("⭐ Favorited", disabled=True, key=f"disabled_{recipe['id']}")
+            else:
+                if st.button("⭐ Add to Favorites", key=f"fav_{recipe['id']}"):
+                    st.session_state.favorites.append(recipe)
