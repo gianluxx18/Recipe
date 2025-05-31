@@ -23,6 +23,10 @@ if "display_count" not in st.session_state:
     st.session_state.display_count = 5
 if "people_count" not in st.session_state:
     st.session_state.people_count = 1
+if "nutrition_cache" not in st.session_state:
+    st.session_state.nutrition_cache = {}
+if "show_nutrition" not in st.session_state:
+    st.session_state.show_nutrition = set()
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -128,8 +132,21 @@ else:
             df.index.name = "Ingredient"
             st.bar_chart(df)
 
-            try:
-                nutrition = fetch_nutrition(recipe.get("id"))
+            # Nutrition Button & Logic
+            show_key = f"show_nutrition_{recipe['id']}"
+            if st.button("Show Nutrition Info", key=show_key):
+                st.session_state.show_nutrition.add(recipe["id"])
+
+            if recipe["id"] in st.session_state.show_nutrition:
+                if recipe["id"] not in st.session_state.nutrition_cache:
+                    try:
+                        nutrition = fetch_nutrition(recipe.get("id"))
+                        st.session_state.nutrition_cache[recipe["id"]] = nutrition
+                    except requests.HTTPError:
+                        st.warning("⚠️ Could not fetch nutrition info.")
+                        continue
+
+                nutrition = st.session_state.nutrition_cache[recipe["id"]]
                 carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * st.session_state.people_count
                 protein = float(nutrition.get("protein", "0g").rstrip("g")) * st.session_state.people_count
                 fat = float(nutrition.get("fat", "0g").rstrip("g")) * st.session_state.people_count
@@ -156,9 +173,6 @@ else:
                     st.write(f"- Carbs: {carbs:.1f} g")
                     st.write(f"- Protein: {protein:.1f} g")
                     st.write(f"- Fat: {fat:.1f} g")
-
-            except requests.HTTPError:
-                st.warning("⚠️ Could not fetch nutrition info.")
 
 # ——— Show More Button ———
 if not st.session_state.show_favorites:
