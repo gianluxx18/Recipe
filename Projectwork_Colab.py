@@ -153,6 +153,7 @@ else:
             st.bar_chart(df)
 
             nutrition_data = st.session_state.recipe_nutrition.get(recipe.get("id"), {})
+            calories = nutrition_data.get("calories", 0)
             carbs = float(nutrition_data.get("carbs", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
             protein = float(nutrition_data.get("protein", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
             fat = float(nutrition_data.get("fat", "0g").rstrip("g")) * st.session_state.people_count if nutrition_data else 0
@@ -176,6 +177,7 @@ else:
 
             with val_col:
                 st.markdown("**Total (g):**")
+                st.write(f"- Calories: {calories:.0f} kcal")
                 st.write(f"- Carbs: {carbs:.1f} g")
                 st.write(f"- Protein: {protein:.1f} g")
                 st.write(f"- Fat: {fat:.1f} g")
