@@ -21,6 +21,8 @@ if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
     st.session_state.display_count = 5
+if "trigger_search" not in st.session_state:
+    st.session_state.trigger_search = False
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
@@ -68,12 +70,16 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
     if not ingr:
         st.warning("❗ Please enter at least one ingredient.")
     else:
-        try:
-            st.session_state.recipes_data = fetch_recipes(ingr)
-            st.session_state.display_count = 5
-        except requests.HTTPError as e:
-            st.error(f"API Error: {e}")
-            st.session_state.recipes_data = []
+        st.session_state.trigger_search = True
+        st.session_state.display_count = 5
+
+if st.session_state.trigger_search:
+    try:
+        st.session_state.recipes_data = fetch_recipes(st.session_state.ingredients.strip())
+    except requests.HTTPError as e:
+        st.error(f"API Error: {e}")
+        st.session_state.recipes_data = []
+    st.session_state.trigger_search = False
 
 # ——— Display Section ———
 if st.session_state.show_favorites:
@@ -156,7 +162,7 @@ else:
             except requests.HTTPError:
                 st.warning("⚠️ Could not fetch nutrition info.")
 
-# Show More button
+# Show More button only for recipe search (not for favorites)
 if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
     if st.button("Show more"):
         st.session_state.display_count += 5
