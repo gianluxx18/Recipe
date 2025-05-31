@@ -21,17 +21,18 @@ if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
     st.session_state.display_count = 5
-if "people_count" not in st.session_state:
-    st.session_state.people_count = 1
+if "refresh_favorites" not in st.session_state:
+    st.session_state.refresh_favorites = False
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
-    st.session_state.people_count = st.number_input(
+    people_count = st.number_input(
         "Number of people",
         min_value=1,
         max_value=100,
-        value=st.session_state.people_count,
+        value=1,
         step=1,
+        key="people_count",
     )
     ingredients = st.text_input(
         "Ingredients (comma-separated)",
@@ -77,7 +78,11 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
             st.session_state.recipes_data = []
 
 # ——— Display Section ———
-recipes = st.session_state.favorites if st.session_state.show_favorites else st.session_state.recipes_data[:st.session_state.display_count]
+if st.session_state.show_favorites:
+    st.header("⭐ Favorite Recipes")
+    recipes = st.session_state.favorites
+else:
+    recipes = st.session_state.recipes_data[:st.session_state.display_count]
 
 if not isinstance(recipes, list) or not recipes:
     st.info("No recipes to show.")
@@ -97,14 +102,15 @@ else:
                         unit = ing.get("unitLong") or ing.get("unit") or ""
                         name = ing.get("originalName") or ing.get("name")
                         st.write(f"- {amt:g} {unit} {name}")
-            if st.session_state.show_favorites:
-                if st.button("Remove from Favorites", key=f"rm_{recipe['id']}"):
-                    st.session_state.favorites = [r for r in st.session_state.favorites if r["id"] != recipe["id"]]
-                    st.experimental_rerun()
+            if recipe not in st.session_state.favorites:
+                if st.button("Add to Favorites", key=f"fav_{recipe['id']}"):
+                    st.session_state.favorites.append(recipe)
             else:
-                if recipe not in st.session_state.favorites:
-                    if st.button("Add to Favorites", key=f"fav_{recipe['id']}"):
-                        st.session_state.favorites.append(recipe)
+                if st.button("Remove from Favorites", key=f"rm_{recipe['id']}"):
+                    st.session_state.favorites = [
+                        fav for fav in st.session_state.favorites if fav["id"] != recipe["id"]
+                    ]
+                    st.session_state.refresh_favorites = True
 
         with col2:
             if recipe.get("image"):
@@ -159,3 +165,8 @@ else:
 if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
     if st.button("Show more"):
         st.session_state.display_count += 5
+
+# Refresh page safely without error
+if st.session_state.refresh_favorites:
+    st.session_state.refresh_favorites = False
+    st.stop()  # cleanly stop execution; no error
