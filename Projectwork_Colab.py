@@ -15,6 +15,8 @@ st.write("Discover delicious recipes based on the ingredients you have on hand!"
 # ——— Session State Initialization ———
 if "recipes_data" not in st.session_state:
     st.session_state.recipes_data = []
+if "favorites" not in st.session_state:
+    st.session_state.favorites = []
 
 # ——— Input Widgets ———
 people_count = st.number_input(
@@ -33,14 +35,12 @@ ingredients = st.text_input(
 
 # ——— Fetch Functions ———
 def fetch_recipes(ingredients_str: str):
-    """Call Spoonacular and return a list of recipe dicts."""
     params = {"apiKey": API_KEY, "ingredients": ingredients_str}
     resp = requests.get(f"{API_BASE_URL}/recipes/findByIngredients", params=params)
     resp.raise_for_status()
     return resp.json()
 
 def fetch_nutrition(recipe_id: int) -> dict:
-    """Call Spoonacular to get nutrition widget (macros)."""
     resp = requests.get(
         f"{API_BASE_URL}/recipes/{recipe_id}/nutritionWidget.json",
         params={"apiKey": API_KEY}
@@ -52,7 +52,7 @@ def fetch_nutrition(recipe_id: int) -> dict:
 if st.button("Search Recipes"):
     ingr = ingredients.strip()
     if not ingr:
-        st.warning("❗ Please enter at least one ingredient.")
+        st.warning("❗️ Please enter at least one ingredient.")
     else:
         try:
             st.session_state.recipes_data = fetch_recipes(ingr)
@@ -60,17 +60,32 @@ if st.button("Search Recipes"):
             st.error(f"API Error: {e}")
             st.session_state.recipes_data = []
 
+# ——— Show Favorites ———
+if st.button("📁 Show Favorites"):
+    if not st.session_state.favorites:
+        st.info("You have no favorite recipes yet.")
+    else:
+        st.subheader("⭐ Your Favorite Recipes:")
+        for fav in st.session_state.favorites:
+            st.markdown(f"**{fav.get('title', 'Untitled')}**")
+
 # ——— Display Results ———
 recipes = st.session_state.recipes_data
 
 if not isinstance(recipes, list) or not recipes:
     st.info("No recipes to show. Try searching with different ingredients.")
 else:
-    for recipe in recipes:
+    for i, recipe in enumerate(recipes):
         st.subheader(recipe.get("title", "Untitled recipe"))
+
+        # Favoriten-Button
+        if st.button("⭐ Add to Favorites", key=f"fav_{i}"):
+            if recipe not in st.session_state.favorites:
+                st.session_state.favorites.append(recipe)
+                st.success(f"'{recipe.get('title', 'Untitled')}' added to favorites!")
+
         col1, col2 = st.columns([1, 2])
 
-        # — Left: used / missed / unused ingredients
         with col1:
             for kind in ("usedIngredients", "missedIngredients", "unusedIngredients"):
                 items = recipe.get(kind, [])
@@ -83,9 +98,7 @@ else:
                         name = ing.get("originalName") or ing.get("name")
                         st.write(f"- {amt:g} {unit} {name}")
 
-        # — Right: image, bar chart, and macro pie chart with totals
         with col2:
-            # Recipe image
             if recipe.get("image"):
                 st.image(
                     recipe["image"],
@@ -93,7 +106,6 @@ else:
                     use_container_width=True
                 )
 
-            # Ingredient bar chart
             combined = recipe.get("usedIngredients", []) + recipe.get("missedIngredients", [])
             data = {
                 ing.get("originalName") or ing.get("name"): people_count * ing.get("amount", 0)
@@ -103,21 +115,17 @@ else:
             df.index.name = "Ingredient"
             st.bar_chart(df)
 
-            # Macronutrient pie chart and totals
             try:
                 nutrition = fetch_nutrition(recipe.get("id"))
-                # parse numeric grams
                 carbs = float(nutrition.get("carbs", "0g").rstrip("g")) * people_count
                 protein = float(nutrition.get("protein", "0g").rstrip("g")) * people_count
                 fat = float(nutrition.get("fat", "0g").rstrip("g")) * people_count
 
                 macros = {"Carbs": carbs, "Protein": protein, "Fat": fat}
-                # Split layout for chart and values
                 pie_col, val_col = st.columns([1, 1])
 
                 with pie_col:
                     fig, ax = plt.subplots()
-                    # set white background
                     fig.patch.set_facecolor("white")
                     ax.set_facecolor("white")
                     ax.pie(
