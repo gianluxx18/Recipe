@@ -21,18 +21,17 @@ if "show_favorites" not in st.session_state:
     st.session_state.show_favorites = False
 if "display_count" not in st.session_state:
     st.session_state.display_count = 5
-if "trigger_search" not in st.session_state:
-    st.session_state.trigger_search = False
+if "people_count" not in st.session_state:
+    st.session_state.people_count = 1
 
 # ——— Input Widgets ———
 if not st.session_state.show_favorites:
-    people_count = st.number_input(
+    st.session_state.people_count = st.number_input(
         "Number of people",
         min_value=1,
         max_value=100,
-        value=1,
+        value=st.session_state.people_count,
         step=1,
-        key="people_count",
     )
     ingredients = st.text_input(
         "Ingredients (comma-separated)",
@@ -70,16 +69,12 @@ if not st.session_state.show_favorites and st.button("Search Recipes"):
     if not ingr:
         st.warning("❗ Please enter at least one ingredient.")
     else:
-        st.session_state.trigger_search = True
-        st.session_state.display_count = 5
-
-if st.session_state.trigger_search:
-    try:
-        st.session_state.recipes_data = fetch_recipes(st.session_state.ingredients.strip())
-    except requests.HTTPError as e:
-        st.error(f"API Error: {e}")
-        st.session_state.recipes_data = []
-    st.session_state.trigger_search = False
+        try:
+            st.session_state.recipes_data = fetch_recipes(ingr)
+            st.session_state.display_count = 5
+        except requests.HTTPError as e:
+            st.error(f"API Error: {e}")
+            st.session_state.recipes_data = []
 
 # ——— Display Section ———
 if st.session_state.show_favorites:
@@ -111,7 +106,10 @@ else:
                     st.session_state.favorites.append(recipe)
             else:
                 if st.button("Remove from Favorites", key=f"rm_{recipe['id']}"):
-                    st.session_state.favorites.remove(recipe)
+                    st.session_state.favorites = [
+                        r for r in st.session_state.favorites if r["id"] != recipe["id"]
+                    ]
+                    st.experimental_rerun()
 
         with col2:
             if recipe.get("image"):
@@ -162,7 +160,8 @@ else:
             except requests.HTTPError:
                 st.warning("⚠️ Could not fetch nutrition info.")
 
-# Show More button only for recipe search (not for favorites)
-if not st.session_state.show_favorites and st.session_state.display_count < len(st.session_state.recipes_data):
-    if st.button("Show more"):
-        st.session_state.display_count += 5
+# ——— Show More Button ———
+if not st.session_state.show_favorites:
+    if st.session_state.display_count < len(st.session_state.recipes_data):
+        if st.button("Show more"):
+            st.session_state.display_count += 5
