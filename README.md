@@ -44,9 +44,11 @@ API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 
 - Visit https://streamlit.io/cloud and sign in with your GitHub account.
 
+- Make sure your Github and Streamlit account are linked
+
 - Click “New app”, then:
 
-    - Select the repository containing this project
+    - Select the repository containing this project ("Recipe")
 
     - Choose the branch ("main")
 
