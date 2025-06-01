@@ -29,7 +29,7 @@ Our project is a Streamlit web application that helps users discover recipes bas
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+requirements.txt
 ```
 
 API key (Spoonacular):
