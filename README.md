@@ -50,7 +50,7 @@ API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 
     - Select the repository containing this project
 
-    - Choose the branch ("main")
+    - Choose the branch (e.g. "main")
 
     - Set the file path to the app script ("Recipe_Finder_App.py")
 
