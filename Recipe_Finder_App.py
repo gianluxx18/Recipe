@@ -3,6 +3,8 @@
 # sort results by calories/macros, and manage favorites.
 # Uses the Spoonacular API. All requirements are listed in requirements.txt.
 
+# Disclosure: This project builds upon a previous work by one of the group members and has been further developed and extended through different features (e.g. sort-function, save-favorites function, showing of nutritional data). ChatGPT was used to assist in the set-up and error correction of the code. 
+
 # Imports the required modules
 # the required modules are also noted in a txt.-file in the github folder to enable streamlit to run the app online
 import os
