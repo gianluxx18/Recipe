@@ -2,9 +2,15 @@
 
 Our project is a Streamlit web application that helps users discover recipes based on ingredients they have at home. Using the Spoonacular API, this app fetches recipes, shows ingredient quantities based on number of people, and displays nutritional information like calories, protein, fat, and carbohydrates.
 
+--- 
+
+Group Members: Behar Saqipi, Gianluca Schorer, Deniz Staufer, Alexandre Zaza
+
 ---
 
-Disclosure: This project builds upon a previous work by one of the group members and has been further developed and extended through different features (e.g. sort-function, save-favorites function, showing of nutritional data). ChatGPT was used to assist in the set-up and error correction of the code.
+# Disclosure: 
+
+This project builds upon a previous work by one of the group members and has been further developed and extended through different features (e.g. sort-function, save-favorites function, showing of nutritional data). ChatGPT was used to assist in the set-up and error correction of the code.
 
 ---
 
