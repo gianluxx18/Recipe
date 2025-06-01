@@ -35,5 +35,5 @@ pip install -r requirements.txt
 API key (Spoonacular):
 
 ```bash
-API_KEY= 4b1abeabfae84cddae3ee1e0803ebc01
+API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 ```
