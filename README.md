@@ -50,7 +50,7 @@ API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 
 ## Set Up via GitHub + Streamlit Cloud
 
-- Fork or clone this repository to your own GitHub account.
+- Fork or clone this repository to your own GitHub account (the repository must be set to public).
 
 - Visit https://streamlit.io/cloud and sign in with your GitHub account.
 
