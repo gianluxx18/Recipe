@@ -59,3 +59,5 @@ API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 The API key is already embedded in the code, so no secrets configuration is necessary.
 
 After deployment, you will receive a public URL to share the app.
+
+You can also test the app by clicking on the following link https://recipe-gi4clazwzoysxnaksqlnme.streamlit.app/ (no github repository download required).
