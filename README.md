@@ -70,4 +70,4 @@ The API key is already embedded in the code, so no secrets configuration is nece
 
 After deployment, you will receive a public URL to share the app.
 
-You can also test the app by clicking on the following link https://recipe-gi4clazwzoysxnaksqlnme.streamlit.app/ (no set-up required).
+You can also run the app directly by clicking on the following link https://recipe-gi4clazwzoysxnaksqlnme.streamlit.app/ (no set-up required).
