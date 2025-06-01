@@ -37,3 +37,23 @@ API key (Spoonacular):
 ```bash
 API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 ```
+
+## Set Up via GitHub + Streamlit Cloud
+
+- Fork or clone this repository to your own GitHub account.
+
+- Visit https://streamlit.io/cloud and sign in with your GitHub account.
+
+- Click “New app”, then:
+
+    - Select the repository containing this project
+
+    - Choose the branch ("main")
+
+    - Set the file path to the app script ("Recipe_Finder_App.py")
+
+- Click “Deploy” to launch the app.
+
+The API key is already embedded in the code, so no secrets configuration is necessary.
+
+After deployment, you will receive a public URL to share the app.
