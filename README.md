@@ -8,7 +8,7 @@ Group Members: Behar Saqipi, Gianluca Schorer, Deniz Staufer, Alexandre Zaza
 
 ---
 
-# Disclosure: 
+## Disclosure: 
 
 This project builds upon a previous work by one of the group members and has been further developed and extended through different features (e.g. sort-function, save-favorites function, showing of nutritional data). ChatGPT was used to assist in the set-up and error correction of the code.
 
