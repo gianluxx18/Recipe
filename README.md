@@ -48,7 +48,7 @@ API_KEY= "4b1abeabfae84cddae3ee1e0803ebc01"
 
 - Click “New app”, then:
 
-    - Select the repository containing this project ("Recipe")
+    - Select the repository containing this project
 
     - Choose the branch ("main")
 
